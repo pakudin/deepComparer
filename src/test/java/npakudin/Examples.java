@@ -5,9 +5,12 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
-public class TestDeepComparer {
+public class Examples {
     @BeforeClass
     public static void setUpClass() throws Exception {
         DeepComparer.setAssertAction(new Action2<Boolean, String>() {
@@ -18,35 +21,51 @@ public class TestDeepComparer {
         });
     }
 
+    // fails with message
+    // $root; expected is null, actual is "qqq"
     @Test
     public void nullAndStringAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual(null, "qqq"));
+        DeepComparer.assertAreEqual(null, "qqq");
     }
+
+    // fails with message
+    // $root; actual is null, expected is ""
     @Test
     public void stringAndNullAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual("", null));
+        DeepComparer.assertAreEqual("", null);
     }
+
+    // OK
     @Test
     public void nullsAreEqual() {
-        Assert.assertTrue(DeepComparer.areEqual(null, null));
+        DeepComparer.assertAreEqual(null, null);
     }
 
 
+    // fails with message
+    // $root; Expected type: class java.lang.String; actual type: class java.lang.Integer.
     @Test
     public void stringAndIntAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual("1", 1));
+        DeepComparer.assertAreEqual("1", 1);
     }
+
+    // OK
     @Test
     public void stringsAreEqual() {
-        Assert.assertTrue(DeepComparer.areEqual("Hello 1", "Hello " + new Integer(1)));
+        DeepComparer.assertAreEqual("Hello 1", "Hello " + new Integer(1));
     }
+
+    // OK
     @Test
     public void intsAreEqual() {
-        Assert.assertTrue(DeepComparer.areEqual(1, 1));
+        DeepComparer.assertAreEqual(1, 1);
     }
+
+    // fails with message
+    // $root; Expected value: "1"; actual value: "2".
     @Test
     public void intsAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual(1, 2));
+        DeepComparer.assertAreEqual(1, 2);
     }
 
 
@@ -58,13 +77,17 @@ public class TestDeepComparer {
             this.x = x;
         }
     }
+    // OK
     @Test
     public void publicFieldsAreEqual() {
-        Assert.assertTrue(DeepComparer.areEqual(new PublicField(1), new PublicField(1)));
+        DeepComparer.assertAreEqual(new PublicField(1), new PublicField(1));
     }
+
+    // fails with message
+    // $root.x; Expected value: "1"; actual value: "2"
     @Test
     public void publicFieldsAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual(new PublicField(1), new PublicField(2)));
+        DeepComparer.assertAreEqual(new PublicField(1), new PublicField(2));
     }
 
 
@@ -79,13 +102,18 @@ public class TestDeepComparer {
         }
 
     }
+
+    //OK
     @Test
     public void publicPropertiesAreEqual() {
-        Assert.assertTrue(DeepComparer.areEqual(new PublicProperty(1), new PublicProperty(1)));
+        DeepComparer.assertAreEqual(new PublicProperty(1), new PublicProperty(1));
     }
+
+    // fails with message
+    // $root.getX; Expected value: "1"; actual value: "2".
     @Test
     public void publicPropertiesAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual(new PublicProperty(1), new PublicProperty(2)));
+        DeepComparer.assertAreEqual(new PublicProperty(1), new PublicProperty(2));
     }
 
 
@@ -102,17 +130,22 @@ public class TestDeepComparer {
             this.x = x;
         }
     }
+
+    //OK
     @Test
     public void listFieldsAreEqual() {
-        Assert.assertTrue(DeepComparer.areEqual(
+        DeepComparer.assertAreEqual(
                 new ListField(Arrays.asList( 1, 2, 3 )),
-                new ListField(Arrays.asList( 1, 2, 3 ))));
+                new ListField(Arrays.asList( 1, 2, 3 )));
     }
+
+    // fails with message
+    // $root.getX.[2]; Expected value: "3"; actual value: "4"
     @Test
     public void listFieldsAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual(
+        DeepComparer.assertAreEqual(
                 new ListField(Arrays.asList( 1, 2, 3 )),
-                new ListField(Arrays.asList( 1, 2, 4 ))));
+                new ListField(Arrays.asList( 1, 2, 4 )));
     }
 
 
@@ -132,6 +165,8 @@ public class TestDeepComparer {
             this.reference = reference;
         }
     }
+
+    //OK
     @Test
     public void cycleReferencesAreEqual() {
         CycleReference expected = new CycleReference(0, null);
@@ -140,8 +175,11 @@ public class TestDeepComparer {
         CycleReference actual = new CycleReference(0, null);
         actual.reference = actual;
 
-        Assert.assertTrue(DeepComparer.areEqual(expected, actual));
+        DeepComparer.assertAreEqual(expected, actual);
     }
+
+    // fails with message
+    // $root.getReference.getReference; actual is null, expected is "npakudin.Examples$CycleReference@4229ab3e".
     @Test
     public void cycleReferencesAreDifferent() {
         CycleReference expected = new CycleReference(0, null);
@@ -149,16 +187,21 @@ public class TestDeepComparer {
 
         CycleReference actual = new CycleReference(0, new CycleReference(0, null));
 
-        Assert.assertFalse(DeepComparer.areEqual(expected, actual));
+        DeepComparer.assertAreEqual(expected, actual);
     }
+
+    // fails with message
+    // $root.getReference; actual is null, expected is npakudin.Examples$CycleReference@32ef2c60.
+    // at each test run number after '@' can be different
     @Test
     public void cycleReferencesErrorMessage() {
         CycleReference expected = new CycleReference(1, new CycleReference(0, null));
         CycleReference actual = new CycleReference(1, null);
 
-        Assert.assertEquals(String.format("$root.getReference; actual is null, expected is \"%s\".", expected.reference),
-                DeepComparer.getNotEqualPath(expected, actual));
+        DeepComparer.assertAreEqual(expected, actual);
     }
+
+    // OK
     @Test
     public void cycleReferencesVeryDeepDifference() {
         CycleReference expected = null;
@@ -169,29 +212,36 @@ public class TestDeepComparer {
             actual = new CycleReference(i, actual);
         }
 
-        Assert.assertEquals(null, DeepComparer.getNotEqualPath(expected, actual));
+        DeepComparer.assertAreEqual(expected, actual);
     }
 
 
 
+    // fails with message
+    // $root; Size of expected: 3; size of actual: 2.
     @Test
     public void iterablesAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual(
+        DeepComparer.assertAreEqual(
                 new ArrayList<String>(Arrays.asList("foo", "bar", "baz")),
-                new LinkedList<String>(Arrays.asList("foo", "bar"))));
+                new LinkedList<String>(Arrays.asList("foo", "bar")));
     }
+
+    //OK
     @Test
     public void iterablesOfDifferentTypesAreEqual() {
-        Assert.assertTrue(DeepComparer.areEqual(
+        DeepComparer.assertAreEqual(
                 new ArrayList<String>(Arrays.asList("foo", "bar", "baz")),
-                new LinkedList<String>(Arrays.asList("foo", "bar", "baz"))));
+                new LinkedList<String>(Arrays.asList("foo", "bar", "baz")));
     }
+
+    // fails with message
+    // $root; Expected type: class java.util.ArrayList; actual type: class java.util.LinkedList.
     @Test
     public void iterablesOfDifferentTypesAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual(
+        DeepComparer.assertAreEqual(
                 new ArrayList<String>(Arrays.asList("foo", "bar", "baz")),
                 new LinkedList<String>(Arrays.asList("foo", "bar", "baz")),
-                true));
+                true);
     }
 
 
@@ -220,6 +270,8 @@ public class TestDeepComparer {
             this.children = children;
         }
     }
+
+    //OK
     @Test
     public void differentNodesAreEqualWithExcludingSomePaths() {
         Node root1 = new Node(null, Arrays.asList(new Node(), new Node()));
@@ -227,10 +279,12 @@ public class TestDeepComparer {
         root2.children.get(0).setParent(root2);
         root2.children.get(1).setParent(root2);
 
-        Assert.assertTrue(DeepComparer.areEqual(root2, root1,
+        DeepComparer.assertAreEqual(root2, root1,
                 "$root.getChildren.[0]",
-                "$root.getChildren.[1]"));
+                "$root.getChildren.[1]");
     }
+
+    //OK
     @Test
     public void differentNodesAreEqualWithExcludingSomeRegexPaths() {
         Node root1 = new Node(null, Arrays.asList(new Node(), new Node()));
@@ -238,7 +292,7 @@ public class TestDeepComparer {
         root2.children.get(0).setParent(root2);
         root2.children.get(1).setParent(root2);
 
-        Assert.assertTrue(DeepComparer.areEqual(root2, root1, "$root.getChildren.[*].getParent"));
+        DeepComparer.assertAreEqual(root2, root1, "$root.getChildren.[*].getParent");
     }
 
 
@@ -275,123 +329,17 @@ public class TestDeepComparer {
             return publicId;
         }
     }
+
+    // fails with message
+    // $root; Expected value: "npakudin.Examples$OverriddenEquals@1"; actual value: "npakudin.Examples$OverriddenEquals@2".
     @Test
     public void overriddenEqualsAreDifferent() {
-        Assert.assertFalse(DeepComparer.areEqual(new OverriddenEquals(1, 1), new OverriddenEquals(2, 2)));
+        DeepComparer.assertAreEqual(new OverriddenEquals(1, 1), new OverriddenEquals(2, 2));
     }
+
+    //OK
     @Test
     public void overriddenEqualsAreEqual() {
-        Assert.assertTrue(DeepComparer.areEqual(new OverriddenEquals(1, 1), new OverriddenEquals(2, 1)));
-    }
-
-
-    class CycleCrossReference {
-        private CycleCrossReference reference1;
-        private CycleCrossReference reference2;
-
-        public CycleCrossReference getReference1() {
-            return reference1;
-        }
-        public void setReference1(CycleCrossReference reference1) {
-            this.reference1 = reference1;
-        }
-        public CycleCrossReference getReference2() {
-            return reference2;
-        }
-        public void setReference2(CycleCrossReference reference2) {
-            this.reference2 = reference2;
-        }
-    }
-    @Test
-    public void cycleCrossReferencesAreEqual() {
-        CycleCrossReference expected = new CycleCrossReference();
-        expected.setReference1(expected);
-
-        CycleCrossReference actual = new CycleCrossReference();
-        actual.setReference1(actual);
-
-        expected.setReference2(actual);
-        actual.setReference2(expected);
-
-        Assert.assertTrue(DeepComparer.areEqual(expected, actual));
-    }
-    @Test
-    public void cycleCrossReferencesAreDifferent() {
-        CycleCrossReference expected = new CycleCrossReference();
-        expected.setReference1(expected);
-
-        CycleCrossReference actual = new CycleCrossReference();
-        actual.setReference1(actual);
-
-        expected.setReference2(actual);
-        actual.setReference2(new CycleCrossReference());
-
-        Assert.assertFalse(DeepComparer.areEqual(expected, actual));
-    }
-
-
-
-    @Test
-    public void cycleReferenceCollectionsAreEqual() {
-        List<Object> expected = new ArrayList<Object>();
-        expected.add(expected);
-
-        List<Object> actual = new ArrayList<Object>();
-        actual.add(actual);
-
-        Assert.assertTrue(DeepComparer.areEqual(expected, actual));
-    }
-    @Test
-    public void cycleReferenceCollectionsAreDifferent() {
-        List<Object> expected = new ArrayList<Object>();
-        expected.add(expected);
-        expected.add(expected);
-
-        List<Object> actual = new ArrayList<Object>();
-        actual.add(actual);
-        actual.add(Arrays.asList(1, 2));
-
-        Assert.assertFalse(DeepComparer.areEqual(expected, actual));
-    }
-    @Test
-    public void cycleReferenceAndCrossReferenceCollectionsAreEqual() {
-        List<Object> expected = new ArrayList<Object>();
-        expected.add(expected);
-
-        List<Object> actual = new ArrayList<Object>();
-        actual.add(actual);
-
-        expected.add(actual);
-        actual.add(expected);
-
-        Assert.assertTrue(DeepComparer.areEqual(expected, actual));
-    }
-    @Test
-    public void cycleReferenceAndReferenceCollectionsAreEqual() {
-        List<Object> expected = new ArrayList<Object>();
-        expected.add(expected);
-
-        List<Object> actual = new ArrayList<Object>();
-        actual.add(actual);
-
-        expected.add(expected);
-        actual.add(expected);
-
-        Assert.assertTrue(DeepComparer.areEqual(expected, actual));
-    }
-    @Test
-    public void cycleReferenceCollectionsAreDifferent2() {
-        List<Object> expected = new ArrayList<Object>();
-        expected.add(expected);
-        expected.add(expected);
-
-        List<Object> actual = new ArrayList<Object>();
-        actual.add(actual);
-        actual.add(expected);
-        actual.add(expected);
-
-        actual.add(Arrays.asList(actual, 2));
-
-        Assert.assertFalse(DeepComparer.areEqual(expected, actual));
+        DeepComparer.assertAreEqual(new OverriddenEquals(1, 1), new OverriddenEquals(2, 1));
     }
 }
