@@ -15,6 +15,6 @@ public class Main {
             }
         });
 
-        DeepComparer.AssertAreEqual(a, b);
+        DeepComparer.assertAreEqual(a, b);
     }
 }

@@ -4,11 +4,11 @@ import java.util.regex.Pattern;
 
 /**
  * Matches string to other string or glob pattern (* and ?).
- * Allows chars: A-Z a-z 0-9 _ * ? . []
+ * Allows chars: A-Z a-z 0-9 _ * ? . $ []
  */
 public class ExcludePath {
 
-    private static Pattern patternForPattern = Pattern.compile("[A-Za-z0-9_\\*\\?\\.\\[\\]]*");
+    private static Pattern patternForPattern = Pattern.compile("[A-Za-z0-9_\\*\\?\\.\\[\\]$]*");
 
     private Pattern pattern;
     private String path;
@@ -24,7 +24,7 @@ public class ExcludePath {
         {
             isGlob = true;
             pattern = Pattern.compile(String.format("^%s$", path.replace("[", "\\[").replace("]", "\\]")
-                    .replace(".", "\\.").replace("*", ".*").replace("?", ".")));
+                    .replace("$", "\\$").replace(".", "\\.").replace("*", ".*").replace("?", ".")));
         }
     }
 
