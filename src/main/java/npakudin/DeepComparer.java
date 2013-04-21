@@ -272,9 +272,8 @@ public class DeepComparer
                 if (actual == null)
                     return stackToPath(referencesStack, String.format("actual is null, expected is \"%s\".", expected));
 
-                if ((!(expected instanceof Iterable) || !(actual instanceof Iterable)) &&
-                        expected.getClass() != actual.getClass())
-                {
+                if (expected.getClass() != actual.getClass() &&
+                        (checkIterableTypesStrictly || !(expected instanceof Iterable && actual instanceof Iterable))) {
                     // if expected is Iterable, then we can compare items only, without details of collection type
                     // else - return error
                     return stackToPath(referencesStack, String.format("Expected type: %s; actual type: %s.",
