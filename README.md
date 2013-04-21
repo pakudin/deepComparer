@@ -19,7 +19,7 @@ It deeply compares objects by public fields and public getters.
 
 ## Getting started
 
-1. Download jar and add it to your test project
+1. Download [jar](https://github.com/pakudin/deepComparer/raw/master/deepComparer.jar) and add it to your test project
 
 2. Create test class and add to section setUpClass (hereinafter used JUnit 4 as testing framework)
 
