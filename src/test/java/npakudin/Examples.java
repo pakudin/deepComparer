@@ -10,6 +10,10 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Some tests here fails.
+ * It's necessary for documentation
+ */
 public class Examples {
     @BeforeClass
     public static void setUpClass() throws Exception {
