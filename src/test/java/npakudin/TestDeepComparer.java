@@ -19,33 +19,33 @@ public class TestDeepComparer {
     }
 
     @Test
-    public void null1Test() {
+    public void nullAndStringAreDifferent() {
         Assert.assertFalse(DeepComparer.areEqual(null, "qqq"));
     }
     @Test
-    public void null2Test() {
+    public void stringAndNullAreDifferent() {
         Assert.assertFalse(DeepComparer.areEqual("", null));
     }
     @Test
-    public void bothNullTest() {
+    public void nullsAreEqual() {
         Assert.assertTrue(DeepComparer.areEqual(null, null));
     }
 
 
     @Test
-    public void stringAndIntTestFalse() {
+    public void stringAndIntAreDifferent() {
         Assert.assertFalse(DeepComparer.areEqual("1", 1));
     }
     @Test
-    public void stringTestTrue() {
+    public void stringsAreEqual() {
         Assert.assertTrue(DeepComparer.areEqual("Hello 1", "Hello " + new Integer(1)));
     }
     @Test
-    public void intTestTrue() {
+    public void intsAreEqual() {
         Assert.assertTrue(DeepComparer.areEqual(1, 1));
     }
     @Test
-    public void intTestFalse() {
+    public void intsAreDifferent() {
         Assert.assertFalse(DeepComparer.areEqual(1, 2));
     }
 
@@ -59,11 +59,11 @@ public class TestDeepComparer {
         }
     }
     @Test
-    public void publicFieldTestTrue() {
+    public void publicFieldsAreEqual() {
         Assert.assertTrue(DeepComparer.areEqual(new PublicField(1), new PublicField(1)));
     }
     @Test
-    public void publicFieldTestFalse() {
+    public void publicFieldsAreDifferent() {
         Assert.assertFalse(DeepComparer.areEqual(new PublicField(1), new PublicField(2)));
     }
 
@@ -80,11 +80,11 @@ public class TestDeepComparer {
 
     }
     @Test
-    public void publicPropertyTestTrue() {
+    public void publicPropertiesAreEqual() {
         Assert.assertTrue(DeepComparer.areEqual(new PublicProperty(1), new PublicProperty(1)));
     }
     @Test
-    public void publicPropertyTestFalse() {
+    public void publicPropertiesAreDifferent() {
         Assert.assertFalse(DeepComparer.areEqual(new PublicProperty(1), new PublicProperty(2)));
     }
 
@@ -103,68 +103,95 @@ public class TestDeepComparer {
         }
     }
     @Test
-    public void listFieldTestTrue() {
-        Assert.assertTrue(DeepComparer.areEqual(new ListField(Arrays.asList( 1, 2, 3 ) ), new ListField(Arrays.asList( 1, 2, 3 ) )));
+    public void listFieldsAreEqual() {
+        Assert.assertTrue(DeepComparer.areEqual(
+                new ListField(Arrays.asList( 1, 2, 3 )),
+                new ListField(Arrays.asList( 1, 2, 3 ))));
     }
     @Test
-    public void listFieldTestFalse() {
-        Assert.assertFalse(DeepComparer.areEqual(new ListField(Arrays.asList( 1, 2, 3 ) ), new ListField(Arrays.asList( 1, 2, 4 ) )));
+    public void listFieldsAreDifferent() {
+        Assert.assertFalse(DeepComparer.areEqual(
+                new ListField(Arrays.asList( 1, 2, 3 )),
+                new ListField(Arrays.asList( 1, 2, 4 ))));
     }
 
 
 
 
     class CycleReference {
+        private int id;
         private CycleReference reference;
+        public int getId() {
+            return id;
+        }
         public CycleReference getReference() {
             return reference;
         }
-        public CycleReference(CycleReference reference) {
+        public CycleReference(int id, CycleReference reference) {
+            this.id = id;
             this.reference = reference;
         }
     }
     @Test
-    public void cycleReferenceTrue() {
-        CycleReference expected = new CycleReference(null);
+    public void cycleReferencesAreEqual() {
+        CycleReference expected = new CycleReference(0, null);
         expected.reference = expected;
 
-        CycleReference actual = new CycleReference(null);
+        CycleReference actual = new CycleReference(0, null);
         actual.reference = actual;
 
         Assert.assertTrue(DeepComparer.areEqual(expected, actual));
     }
     @Test
-    public void cycleReferenceFalse() {
-        CycleReference expected = new CycleReference(null);
+    public void cycleReferencesAreDifferent() {
+        CycleReference expected = new CycleReference(0, null);
         expected.reference = expected;
 
-        CycleReference actual = new CycleReference(new CycleReference(null));
-
-        Assert.assertFalse(DeepComparer.areEqual(expected, actual));
-    }
-
-
-
-    @Test
-    public void collectionIterableTrue() {
-        Iterable<String> expected = new ArrayList<String>(Arrays.asList("foo", "bar", "baz"));
-        Iterable<String> actual = new LinkedList<String>(Arrays.asList("foo", "bar", "baz"));
-
-        Assert.assertTrue(DeepComparer.areEqual(expected, actual));
-    }
-    @Test
-    public void collectionIterableFalse() {
-        Iterable<String> expected = new ArrayList<String>(Arrays.asList("foo", "bar", "baz"));
-        Iterable<String> actual = new LinkedList<String>(Arrays.asList("foo", "bar"));
+        CycleReference actual = new CycleReference(0, new CycleReference(0, null));
 
         Assert.assertFalse(DeepComparer.areEqual(expected, actual));
     }
     @Test
-    public void collectionCheckIterableTypesStrictly() {
-        Iterable<String> expected = new ArrayList<String>(Arrays.asList("foo", "bar", "baz"));
-        Iterable<String> actual = new LinkedList<String>(Arrays.asList("foo", "bar", "baz"));
+    public void cycleReferencesErrorMessage() {
+        CycleReference expected = new CycleReference(1, new CycleReference(0, null));
+        CycleReference actual = new CycleReference(1, null);
 
-        Assert.assertFalse(DeepComparer.areEqual(expected, actual, true));
+        Assert.assertEquals(String.format("$root.getReference; actual is null, expected is \"%s\".", expected.reference),
+                DeepComparer.getNotEqualPath(expected, actual));
+    }
+    @Test
+    public void cycleReferencesVeryDeepDifference() {
+        CycleReference expected = null;
+        CycleReference actual = null;
+
+        for (int i=0; i<3; i++) {
+            expected = new CycleReference(i, expected);
+            actual = new CycleReference(i, actual);
+        }
+
+        Assert.assertEquals(null, DeepComparer.getNotEqualPath(expected, actual));
+    }
+
+
+
+    @Test
+    public void iterablesAreDifferent() {
+        Assert.assertFalse(DeepComparer.areEqual(
+                new ArrayList<String>(Arrays.asList("foo", "bar", "baz")),
+                new LinkedList<String>(Arrays.asList("foo", "bar"))));
+    }
+    @Test
+    public void iterablesOfDifferentTypesAreEqual() {
+        Assert.assertTrue(DeepComparer.areEqual(
+                new ArrayList<String>(Arrays.asList("foo", "bar", "baz")),
+                new LinkedList<String>(Arrays.asList("foo", "bar", "baz"))));
+    }
+    @Test
+    public void iterablesOfDifferentTypesAreDifferent() {
+        Assert.assertFalse(DeepComparer.areEqual(
+                new ArrayList<String>(Arrays.asList("foo", "bar", "baz")),
+                new LinkedList<String>(Arrays.asList("foo", "bar", "baz")),
+                true));
     }
 
 
@@ -194,7 +221,7 @@ public class TestDeepComparer {
         }
     }
     @Test
-    public void testIgnoreListItem() {
+    public void differentNodesAreEqualWithExcludingSomePaths() {
         Node root1 = new Node(null, Arrays.asList(new Node(), new Node()));
         Node root2 = new Node(null, Arrays.asList(new Node(), new Node()));
         root2.children.get(0).setParent(root2);
@@ -205,7 +232,7 @@ public class TestDeepComparer {
                 "$root.getChildren.[1]"));
     }
     @Test
-    public void testIgnoreGlobPath() {
+    public void differentNodesAreEqualWithExcludingSomeRegexPaths() {
         Node root1 = new Node(null, Arrays.asList(new Node(), new Node()));
         Node root2 = new Node(null, Arrays.asList(new Node(), new Node()));
         root2.children.get(0).setParent(root2);
@@ -223,6 +250,7 @@ public class TestDeepComparer {
             this.internalId = internalId;
             this.publicId = publicId;
         }
+
         public int getInternalId() {
             return internalId;
         }
@@ -248,41 +276,13 @@ public class TestDeepComparer {
         }
     }
     @Test
-    public void testNotEqualOverriddenEquals() {
+    public void overriddenEqualsAreDifferent() {
         Assert.assertFalse(DeepComparer.areEqual(new OverriddenEquals(1, 1), new OverriddenEquals(2, 2)));
     }
     @Test
-    public void testEqualOverriddenEquals() {
+    public void overriddenEqualsAreEqual() {
         Assert.assertTrue(DeepComparer.areEqual(new OverriddenEquals(1, 1), new OverriddenEquals(2, 1)));
     }
-
-
-
-
-    class NestedClassField {
-        private ListField x;
-        public ListField getX() {
-            return x;
-        }
-        NestedClassField(ListField x) {
-            this.x = x;
-        }
-    }
-    @Test
-    public void nestedClassFieldTestTrue() {
-        Assert.assertTrue(DeepComparer.areEqual(
-                new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) )),
-                new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) ))));
-    }
-    @Test
-    public void nestedClassFieldTestFalse() {
-        Assert.assertTrue(DeepComparer.areEqual(
-                new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) )),
-                new NestedClassField(new ListField(Arrays.asList( 1, 2, 4 ) ))));
-    }
-
-
-
 
 
     class CycleCrossReference {
@@ -303,7 +303,7 @@ public class TestDeepComparer {
         }
     }
     @Test
-    public void cycleCrossReferenceTrue() {
+    public void cycleCrossReferencesAreEqual() {
         CycleCrossReference expected = new CycleCrossReference();
         expected.setReference1(expected);
 
@@ -316,7 +316,7 @@ public class TestDeepComparer {
         Assert.assertTrue(DeepComparer.areEqual(expected, actual));
     }
     @Test
-    public void cycleCrossReferenceFalse() {
+    public void cycleCrossReferencesAreDifferent() {
         CycleCrossReference expected = new CycleCrossReference();
         expected.setReference1(expected);
 
@@ -332,7 +332,7 @@ public class TestDeepComparer {
 
 
     @Test
-    public void collectionCycleReferenceTrue() {
+    public void cycleReferenceCollectionsAreEqual() {
         List<Object> expected = new ArrayList<Object>();
         expected.add(expected);
 
@@ -342,7 +342,7 @@ public class TestDeepComparer {
         Assert.assertTrue(DeepComparer.areEqual(expected, actual));
     }
     @Test
-    public void collectionCycleReferenceFalse() {
+    public void cycleReferenceCollectionsAreDifferent() {
         List<Object> expected = new ArrayList<Object>();
         expected.add(expected);
         expected.add(expected);
@@ -354,7 +354,7 @@ public class TestDeepComparer {
         Assert.assertFalse(DeepComparer.areEqual(expected, actual));
     }
     @Test
-    public void collectionCycleCrossReferenceTrue() {
+    public void cycleReferenceAndCrossReferenceCollectionsAreEqual() {
         List<Object> expected = new ArrayList<Object>();
         expected.add(expected);
 
@@ -367,7 +367,7 @@ public class TestDeepComparer {
         Assert.assertTrue(DeepComparer.areEqual(expected, actual));
     }
     @Test
-    public void collectionCycleCrossReferenceTrue2() {
+    public void cycleReferenceAndReferenceCollectionsAreEqual() {
         List<Object> expected = new ArrayList<Object>();
         expected.add(expected);
 
@@ -380,7 +380,7 @@ public class TestDeepComparer {
         Assert.assertTrue(DeepComparer.areEqual(expected, actual));
     }
     @Test
-    public void collectionCycleCrossReferenceFalse() {
+    public void cycleReferenceCollectionsAreDifferent2() {
         List<Object> expected = new ArrayList<Object>();
         expected.add(expected);
         expected.add(expected);
@@ -394,45 +394,4 @@ public class TestDeepComparer {
 
         Assert.assertFalse(DeepComparer.areEqual(expected, actual));
     }
-
-
-
-
-    class ComplexClass {
-        private int id;
-        private ComplexClass reference;
-        public int getId() {
-            return id;
-        }
-        public void setId(int id) {
-            this.id = id;
-        }
-        public ComplexClass getReference() {
-            return reference;
-        }
-        public void setReference(ComplexClass reference) {
-            this.reference = reference;
-        }
-        public ComplexClass(int id, ComplexClass reference) {
-            this.id = id;
-            this.reference = reference;
-        }
-        public ComplexClass() {
-        }
-    }
-    @Test
-    public void testNotEqualPath() {
-        ComplexClass expected = new ComplexClass(1, new ComplexClass());
-        ComplexClass actual = new ComplexClass(1, null);
-
-        Assert.assertEquals(String.format("$root.getReference; actual is null, expected is \"%s\".", expected.reference),
-                DeepComparer.getNotEqualPath(expected, actual));
-    }
-    @Test
-    public void testEqualPath() {
-        ComplexClass expected = new ComplexClass(1, new ComplexClass(2, new ComplexClass(3, null)));
-        ComplexClass actual = new ComplexClass(1, new ComplexClass(2, new ComplexClass(3, null)));
-        Assert.assertEquals(null, DeepComparer.getNotEqualPath(expected, actual));
-    }
-
 }
