@@ -127,8 +127,10 @@ public class TestDeepComparer {
     public void cycleReferenceTrue() {
         CycleReference expected = new CycleReference(null);
         expected.reference = expected;
+
         CycleReference actual = new CycleReference(null);
         actual.reference = actual;
+
         Assert.assertTrue(DeepComparer.areEqual(expected, actual));
     }
     @Test
@@ -247,17 +249,11 @@ public class TestDeepComparer {
     }
     @Test
     public void testNotEqualOverriddenEquals() {
-        OverriddenEquals expected = new OverriddenEquals(1, 1);
-        OverriddenEquals actual = new OverriddenEquals(2, 2);
-
-        Assert.assertFalse(DeepComparer.areEqual(expected, actual));
+        Assert.assertFalse(DeepComparer.areEqual(new OverriddenEquals(1, 1), new OverriddenEquals(2, 2)));
     }
     @Test
     public void testEqualOverriddenEquals() {
-        OverriddenEquals expected = new OverriddenEquals(1, 1);
-        OverriddenEquals actual = new OverriddenEquals(2, 1);
-
-        Assert.assertTrue(DeepComparer.areEqual(expected, actual));
+        Assert.assertTrue(DeepComparer.areEqual(new OverriddenEquals(1, 1), new OverriddenEquals(2, 1)));
     }
 
 
@@ -274,15 +270,15 @@ public class TestDeepComparer {
     }
     @Test
     public void nestedClassFieldTestTrue() {
-        NestedClassField expected = new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) ));
-        NestedClassField actual = new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) ));
-        Assert.assertTrue(DeepComparer.areEqual(expected, actual));
+        Assert.assertTrue(DeepComparer.areEqual(
+                new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) )),
+                new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) ))));
     }
     @Test
     public void nestedClassFieldTestFalse() {
-        NestedClassField expected = new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) ));
-        NestedClassField actual = new NestedClassField(new ListField(Arrays.asList( 1, 2, 4 ) ));
-        Assert.assertFalse(DeepComparer.areEqual(expected, actual));
+        Assert.assertTrue(DeepComparer.areEqual(
+                new NestedClassField(new ListField(Arrays.asList( 1, 2, 3 ) )),
+                new NestedClassField(new ListField(Arrays.asList( 1, 2, 4 ) ))));
     }
 
 
